@@ -110,14 +110,15 @@ def main(variant):
     
     if variant.env == 'libero':
         benchmark_dict = benchmark.get_benchmark_dict()
-        task_suite = benchmark_dict["libero_90"]()
-        task_id = 57
+        task_suite = benchmark_dict["libero_goal"]()
+        task_id = variant.get("task_id", 0)
         task = task_suite.get_task(task_id)
         env, task_description = _get_libero_env(task, 256, variant.seed)
         eval_env = env
         variant.task_description = task_description
         variant.env_max_reward = 1
         variant.max_timesteps = 400
+        print(f'Using libero_goal task {task_id}: {task_description}')
     elif variant.env == 'aloha_cube':
         from gymnasium.envs.registration import register
         register(
@@ -144,16 +145,42 @@ def main(variant):
     print('sample action shape', sample_action.shape)
     
 
-    if variant.env == 'libero':
-        config = openpi_config.get_config("pi0_libero")
-        checkpoint_dir = download.maybe_download("s3://openpi-assets/checkpoints/pi0_libero")
-    elif variant.env == 'aloha_cube':
-        config = openpi_config.get_config("pi0_aloha_sim")
-        checkpoint_dir = download.maybe_download("s3://openpi-assets/checkpoints/pi0_aloha_sim")
+    # Policy type selection: "pi0" (default) or "walloss"
+    policy_type = variant.get("policy_type", "pi0")
+
+    if policy_type == "pi0":
+        # Load π0 policy (JAX-based)
+        if variant.env == 'libero':
+            config = openpi_config.get_config("pi0_libero")
+            # checkpoint_dir = download.maybe_download("s3://openpi-assets/checkpoints/pi0_libero")
+            checkpoint_dir = download.maybe_download("/data/disk0/Models/pi0_libero")
+            # checkpoint_dir = download.maybe_download("/data/disk0/Models/pi0_base")
+        elif variant.env == 'aloha_cube':
+            config = openpi_config.get_config("pi0_aloha_sim")
+            checkpoint_dir = download.maybe_download("s3://openpi-assets/checkpoints/pi0_aloha_sim")
+        else:
+            raise NotImplementedError()
+        agent_dp = policy_config.create_trained_policy(config, checkpoint_dir)
+        print("Loaded pi0 policy from %s", checkpoint_dir)
+
+    elif policy_type == "walloss":
+        # Load Walloss policy (PyTorch-based)
+        from examples.walloss_config import create_walloss_adapter
+        agent_dp = create_walloss_adapter(
+            env=variant.env,
+            model_path=variant.get("walloss_model_path", "/data/disk0/Models/wall-x-libero"),
+            processor_path=variant.get("walloss_processor_path", "/data/disk0/Models/wall-x-libero"),
+            norm_stats_path=variant.get("walloss_norm_stats_path", "/data/disk0/Models/wall-x-libero/norm_stats.json"),
+            train_config_path=variant.get("walloss_train_config_path"),
+            action_horizon=variant.get("query_freq", 32),
+            action_dim=variant.get("action_dim", 7),
+            agent_pos_dim=variant.get("agent_pos_dim", 8),
+            predict_mode=variant.get("walloss_predict_mode", "fast"),
+        )
+        print("Loaded Walloss policy for environment: %s", variant.env)
+
     else:
-        raise NotImplementedError()
-    agent_dp = policy_config.create_trained_policy(config, checkpoint_dir)
-    print("Loaded pi0 policy from %s", checkpoint_dir)
+        raise ValueError(f"Unknown policy_type: {policy_type}. Supported: 'pi0', 'walloss'")
     agent = PixelSACLearner(variant.seed, sample_obs, sample_action, **kwargs)
 
     online_buffer_size = variant.max_steps  // variant.multi_grad_step

@@ -25,6 +25,17 @@ if __name__ == '__main__':
     parser.add_argument('--multi_grad_step', default=1, help='Number of graident steps to take per environment step, aka UTD', type=int)
     parser.add_argument('--resize_image', default=-1, help='the size of image if need resizing', type=int)
     parser.add_argument('--query_freq', default=-1, help='query frequency', type=int)
+    parser.add_argument('--task_id', default=0, help='Task ID for libero_goal (0-9)', type=int)
+
+    # Policy type selection
+    parser.add_argument('--policy_type', default='pi0', help='Policy type: pi0 (default) or walloss')
+    parser.add_argument('--walloss_model_path', default='/data/disk0/Models/wall-x-libero', help='Path to Walloss model')
+    parser.add_argument('--walloss_processor_path', default='/data/disk0/Models/wall-x-libero', help='Path to Walloss processor')
+    parser.add_argument('--walloss_norm_stats_path', default='/data/disk0/Models/wall-x-libero/norm_stats.json', help='Path to Walloss norm stats')
+    parser.add_argument('--walloss_train_config_path', default=None, help='Path to Walloss train config YAML')
+    parser.add_argument('--walloss_predict_mode', default='fast', help='Walloss predict mode: fast or diffusion')
+    parser.add_argument('--action_dim', default=7, help='Action dimension', type=int)
+    parser.add_argument('--agent_pos_dim', default=8, help='Agent position dimension', type=int)
     
     train_args_dict = dict(
         actor_lr=1e-4,

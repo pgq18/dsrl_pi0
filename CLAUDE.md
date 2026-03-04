@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Conda Environment
 - Environment Name: `dsrl_pi0`
-- Python Path: `/data/pgq/miniconda3/envs/dsrl_pi0/bin/python`
+- Python Path: `/home/pengguanqi/miniconda3/envs/dsrl_pi0/bin/python`
 - Python Version: 3.11.11
-- Usage: `/data/pgq/miniconda3/envs/dsrl_pi0/bin/python <script>` or activate with `conda activate dsrl_pi0`
+- Usage: `/home/pengguanqi/miniconda3/envs/dsrl_pi0/bin/python <script>` or activate with `conda activate dsrl_pi0`
 
 ## Overview
 

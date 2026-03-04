@@ -94,6 +94,14 @@ def trajwise_alternating_training_loop(variant, agent, env, eval_env, online_rep
     if shard_fn is not None:
         replay_buffer_iterator = map(shard_fn, replay_buffer_iterator)
 
+    # Print training configuration
+    print("=" * 60)
+    print("Training Configuration (variant):")
+    print("=" * 60)
+    for key, value in sorted(variant.items()):
+        print(f"  {key}: {value}")
+    print("=" * 60)
+
     total_env_steps = 0
     i = 0
     wandb_logger.log({'num_online_samples': 0}, step=i)
